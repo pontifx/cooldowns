@@ -14,28 +14,45 @@ Most productivity apps assume the future is something to be conquered — alarms
 
 ## Features
 
-### 🧙 Narrative Onboarding Wizard
+### Narrative Onboarding Wizard
 A 10-screen feeling-first experience that asks "How do you want your week to feel?" before asking what to schedule. Users select vibes (Calm, Energized, Sharp, Connected, etc.) and the app intelligently suggests cooldowns that match their emotional goals.
 
-- **Welcome** → **Vibe Selection** (8 feeling chips with dynamic narrative generation)
-- **Body** (5 health/fitness cards) → **Mind** (3 learning/growth cards) → **People** (connection card)
-- **Space & Self** (2 home/grooming cards) → **Adventure** (vacation + marketplace teaser)
-- **Weekly Calendar Grid** (Mon-Sun × Morning/Afternoon/Evening visual layout)
-- **Location** (optional, for weather-aware suggestions) → **Ready** (summary + confetti celebration)
+- **Welcome** > **Vibe Selection** (8 feeling chips with dynamic narrative generation)
+- **Body** (5 health/fitness cards) > **Mind** (3 learning/growth cards) > **People** (connection card)
+- **Space & Self** (2 home/grooming cards) > **Adventure** (vacation + marketplace teaser)
+- **Weekly Calendar Grid** (Mon-Sun x Morning/Afternoon/Evening) with auto-placement
+- **Location** (optional, for weather-aware suggestions) > **Ready** (summary + confetti celebration)
 
-### 📊 Dashboard
-Cards sorted by urgency with SVG progress rings, time-of-day greetings, and weather-aware taglines. Each cooldown shows its cycle status: Fresh (just completed), Cooling (in progress), or Ready (time to refresh).
+### Dashboard with Dream Mode
+Cards sorted by urgency with SVG progress rings, time-of-day greetings, and ambient backgrounds that shift with the time of day.
 
-### 🛍️ Marketplace — Offerings, Not Ads
-Instead of emailing spam, Cooldowns builds a messaging-style UI where curated advertisers make one-click offerings relevant to your cooldowns. When your dental cooldown is ready, a cleaning special appears. When vacation time arrives, real trip options show up.
+**Dream Mode**: A horizontally scrollable carousel of immersive dream cards that visualize your next cooldowns as first-person experiences. "You're running. The air is crisp. Your body knows what to do." Each card has a custom gradient, ambient emoji, evocative text, and sound hint.
 
-Organized by category: Health, Fitness, Travel, Home, Learning, Finance.
+### Messaging UI — Offerings, Not Spam
+Instead of emailing spam, Cooldowns presents advertiser offerings as **conversations**. The marketplace is a chat-style messaging inbox where:
 
-### ⚙️ Settings
-Dark mode toggle, notification preferences, reset onboarding, and the Cooldowns philosophy statement.
+- **Inbox**: Conversation threads grouped by brand, sorted by relevance to your ready cooldowns
+- **Thread View**: Brand messages appear as chat bubbles with offering details and one-click CTAs
+- **Smart Relevance**: Offerings matching your ready cooldowns surface first with "Matches your cooldown" badges
+- **Unread Tracking**: Coral dots indicate threads with fresh offerings tied to your active cooldowns
 
-### 🔄 Detail Modal
-Bottom sheet with large progress ring, mark-complete with confetti celebration, and history timeline showing past completions.
+### Notification System
+- Bell icon in the dashboard header with red dot for new notifications
+- Slide-down notification drawer with "Cooldown ready" alerts and "New offering" messages
+- Each notification taps through to the relevant detail modal or message thread
+- PWA push notification permission flow in settings
+
+### Persistent Storage
+State survives page refreshes and browser restarts:
+- Uses browser persistent storage when available (standalone PWA)
+- Graceful in-memory fallback for sandboxed environments
+- Persists: cooldowns, history, theme, vibes, week schedule, read states, notifications
+
+### Settings
+Dark mode toggle, notification preferences, push notification permission, reset onboarding, and the Cooldowns philosophy statement.
+
+### Detail Modal
+Bottom sheet with dream-mode gradient background, large progress ring, mark-complete with confetti celebration, and history timeline.
 
 ## 12 Cooldown Categories
 
@@ -56,28 +73,27 @@ Bottom sheet with large progress ring, mark-complete with confetti celebration, 
 
 ## Design
 
-- **Palette**: Warm cream (#FBF9F6), coral primary (#E8734A), teal secondary (#2A9D8F) — intentionally warm and inviting
+- **Palette**: Warm cream (#FBF9F6), coral primary (#E8734A), teal secondary (#2A9D8F)
 - **Typography**: Instrument Serif (display) + Plus Jakarta Sans (body)
 - **Dark Mode**: Full dark theme support with adapted palette
-- **Animations**: Golden easing curves, card enter animations, confetti system, progress ring transitions
+- **Ambient Themes**: Dashboard background shifts with time of day (morning/afternoon/evening/night)
+- **Animations**: Golden easing curves, card enter animations, confetti system, progress ring transitions, dream card scale-up, notification drawer slide
 
 ## Tech Stack
 
 - **Pure HTML/CSS/JS** — no frameworks, no build step
 - **PWA**: Service worker for offline caching, web app manifest for installability
-- **Responsive**: Mobile-first, optimized for 375px–500px with safe area insets
+- **Responsive**: Mobile-first, optimized for 375px-500px with safe area insets
 - **Zero dependencies**: Everything runs from three files
 
 ## Running Locally
 
-1. Clone the repo
-2. Serve the `cooldowns/` directory with any static server
-3. Open on your phone or in mobile device emulation
-
 ```bash
-# Quick start with Python
+# Clone and serve
+git clone https://github.com/pontifx/cooldowns.git
+cd cooldowns
 python -m http.server 8000
-# Then visit http://localhost:8000
+# Visit http://localhost:8000
 ```
 
 Add `?demo` to the URL to auto-populate sample data and skip onboarding.
@@ -87,6 +103,37 @@ Add `?demo` to the URL to auto-populate sample data and skip onboarding.
 > *"The goal is immersion and ease. I want to be able to dream and have it already be set what I am doing. We are eventually going to get so good at it, that we can match people to each place."*
 
 Cooldowns is building toward a future where the app knows you well enough to turn your dreams into scheduled reality — matching people to places, experiences, and moments that fit who they are and who they want to become.
+
+## Changelog
+
+### v0.4.0 — Messaging UI + Notifications
+- Chat-style messaging inbox replaces static marketplace
+- Thread view with brand message bubbles and CTA replies
+- Notification bell with slide-down drawer
+- Smart relevance sorting (ready cooldowns surface matching offers)
+- Unread tracking with coral dot badges
+- PWA push notification permission flow
+
+### v0.3.0 — Dream Mode + Persistence
+- Immersive dream visualization carousel on dashboard
+- 12 unique dream scenes with gradients, text, and sound hints
+- Time-of-day ambient dashboard backgrounds
+- Persistent storage layer (survives refreshes)
+- Smart marketplace relevance badges
+
+### v0.2.0 — Narrative Wizard
+- 10-screen feeling-first onboarding wizard
+- Vibe-to-cooldown mapping intelligence
+- Weekly calendar grid with auto-placement
+- Dynamic narrative text generation
+
+### v0.1.0 — Foundation
+- PWA shell with service worker
+- Dashboard with progress rings
+- 12 cooldown categories
+- Marketplace with 14 offerings
+- Dark mode support
+- Detail modal with mark-complete
 
 ## License
 
