@@ -142,7 +142,7 @@
     { brand: 'Manduka', brandInitial: 'M', title: 'Yoga mat + block set — $34.99', desc: 'Premium eco-friendly mat and cork block. Everything you need to stretch.', category: 'Fitness', related: 'Stretch', gradient: 'linear-gradient(135deg, #2A9D8F22, #4DB8AA11)' },
     { brand: 'Airbnb', brandInitial: 'A', title: 'Weekend getaway: Napa Valley from $199/night', desc: 'Charming vineyard cottages, hot tubs, and mountain views. You deserve this.', category: 'Travel', related: 'Take a Vacation', gradient: 'linear-gradient(135deg, #F4A26133, #E8734A11)' },
     { brand: 'Airlines', brandInitial: '✈', title: 'Flights to Hawaii from $298 round trip', desc: 'Direct flights, flexible dates. Beach therapy is always a good idea.', category: 'Travel', related: 'Take a Vacation', gradient: 'linear-gradient(135deg, #2A9D8F22, #4CAF5011)' },
-    { brand: 'Canc\u00fan Resorts', brandInitial: '🏖', title: 'All-inclusive Canc\u00fan — 5 nights from $899', desc: 'Sun, sand, and zero planning. Everything taken care of so you can rest.', category: 'Travel', related: 'Take a Vacation', gradient: 'linear-gradient(135deg, #F4A26122, #E8734A22)' },
+    { brand: 'Cancún Resorts', brandInitial: '🏖', title: 'All-inclusive Cancún — 5 nights from $899', desc: 'Sun, sand, and zero planning. Everything taken care of so you can rest.', category: 'Travel', related: 'Take a Vacation', gradient: 'linear-gradient(135deg, #F4A26122, #E8734A22)' },
     { brand: 'Handy', brandInitial: 'H', title: 'Deep clean your place — starting at $99', desc: 'Vetted professionals, eco-friendly products. Come home to a fresh space.', category: 'Home', related: 'Deep Clean Home', gradient: 'linear-gradient(135deg, #4CAF5022, #2A9D8F11)' },
     { brand: 'Dyson', brandInitial: 'D', title: 'Dyson V15 — $150 off this week', desc: 'The most powerful cordless vacuum. Laser reveals hidden dust.', category: 'Home', related: 'Deep Clean Home', gradient: 'linear-gradient(135deg, #8A858022, #2D2A2611)' },
     { brand: 'MasterClass', brandInitial: 'M', title: 'MasterClass annual — $10/month', desc: 'Learn from the world\'s best. Cooking, writing, music, business, and more.', category: 'Learning', related: 'Learn Something New', gradient: 'linear-gradient(135deg, #2D2A2622, #8A858011)' },
@@ -204,6 +204,144 @@
       return 'You want weeks that ' + phrases[0] + ' and ' + phrases[1] + '. Let\'s make that real.';
     }
     return 'You want weeks that ' + phrases[0] + ', ' + phrases[1] + ', and ' + phrases[2] + '. Let\'s make that real.';
+  }
+
+  // ============================
+  // DREAM MODE — Ambient Data
+  // ============================
+  const DREAM_SCENES = {
+    workout: {
+      gradient: 'linear-gradient(135deg, #FF6B3520, #FF914D15, #FBF9F600)',
+      ambientEmoji: '🏃',
+      dreamText: 'You\'re running. The air is crisp. Your body knows what to do.',
+      soundHint: 'wind & footsteps'
+    },
+    stretch: {
+      gradient: 'linear-gradient(135deg, #9B59B620, #8E44AD15, #FBF9F600)',
+      ambientEmoji: '🧘',
+      dreamText: 'Sunlight on the mat. Slow breath. Every muscle letting go.',
+      soundHint: 'soft morning birds'
+    },
+    doctor: {
+      gradient: 'linear-gradient(135deg, #2A9D8F20, #4DB8AA15, #FBF9F600)',
+      ambientEmoji: '🩺',
+      dreamText: '"Everything looks great." The relief washes over you.',
+      soundHint: 'quiet hum'
+    },
+    eye: {
+      gradient: 'linear-gradient(135deg, #3498DB20, #2980B915, #FBF9F600)',
+      ambientEmoji: '👁️',
+      dreamText: 'The world snaps into focus. Colors you forgot existed.',
+      soundHint: 'gentle click'
+    },
+    dental: {
+      gradient: 'linear-gradient(135deg, #1ABC9C20, #16A08515, #FBF9F600)',
+      ambientEmoji: '✨',
+      dreamText: 'That clean-teeth feeling. You can\'t stop smiling.',
+      soundHint: 'soft chime'
+    },
+    vacation: {
+      gradient: 'linear-gradient(135deg, #F39C1220, #E67E2215, #FBF9F600)',
+      ambientEmoji: '🌴',
+      dreamText: 'Sand between your toes. Nowhere to be. This is what rest feels like.',
+      soundHint: 'ocean waves'
+    },
+    mixup: {
+      gradient: 'linear-gradient(135deg, #E74C3C20, #C0392B15, #FBF9F600)',
+      ambientEmoji: '🎲',
+      dreamText: 'You did something you\'ve never done before. And you loved it.',
+      soundHint: 'excited crowd'
+    },
+    haircut: {
+      gradient: 'linear-gradient(135deg, #8E44AD20, #9B59B615, #FBF9F600)',
+      ambientEmoji: '✂️',
+      dreamText: 'You catch your reflection. Looking sharp. Feeling sharper.',
+      soundHint: 'scissors snip'
+    },
+    deepclean: {
+      gradient: 'linear-gradient(135deg, #27AE6020, #2ECC7115, #FBF9F600)',
+      ambientEmoji: '🏠',
+      dreamText: 'Every surface gleaming. You take a deep breath in your own home.',
+      soundHint: 'fresh air'
+    },
+    callsomeone: {
+      gradient: 'linear-gradient(135deg, #F1C40F20, #F39C1215, #FBF9F600)',
+      ambientEmoji: '💛',
+      dreamText: '"I\'m so glad you called." Three words that change everything.',
+      soundHint: 'warm laughter'
+    },
+    learn: {
+      gradient: 'linear-gradient(135deg, #3498DB20, #2C3E5015, #FBF9F600)',
+      ambientEmoji: '💡',
+      dreamText: 'The click of understanding. You see it now. It all makes sense.',
+      soundHint: 'page turning'
+    },
+    finance: {
+      gradient: 'linear-gradient(135deg, #2ECC7120, #27AE6015, #FBF9F600)',
+      ambientEmoji: '📊',
+      dreamText: 'The numbers look good. You exhale. Future you says thank you.',
+      soundHint: 'soft notification'
+    }
+  };
+
+  // Time-of-day ambient themes
+  const AMBIENT_THEMES = {
+    morning: {
+      gradient: 'linear-gradient(180deg, #FFF8F0, #FBF9F6)',
+      greeting: 'Rise gently',
+      icon: '🌅'
+    },
+    afternoon: {
+      gradient: 'linear-gradient(180deg, #F5F0EB, #FBF9F6)',
+      greeting: 'The day unfolds',
+      icon: '☀️'
+    },
+    evening: {
+      gradient: 'linear-gradient(180deg, #F0E8E0, #FBF9F6)',
+      greeting: 'Wind down',
+      icon: '🌙'
+    },
+    night: {
+      gradient: 'linear-gradient(180deg, #E8E0D8, #FBF9F6)',
+      greeting: 'Rest well',
+      icon: '✨'
+    }
+  };
+
+  const AMBIENT_THEMES_DARK = {
+    morning: {
+      gradient: 'linear-gradient(180deg, #2A2420, #1A1816)',
+      greeting: 'Rise gently',
+      icon: '🌅'
+    },
+    afternoon: {
+      gradient: 'linear-gradient(180deg, #252220, #1A1816)',
+      greeting: 'The day unfolds',
+      icon: '☀️'
+    },
+    evening: {
+      gradient: 'linear-gradient(180deg, #201E1C, #1A1816)',
+      greeting: 'Wind down',
+      icon: '🌙'
+    },
+    night: {
+      gradient: 'linear-gradient(180deg, #1E1C1A, #1A1816)',
+      greeting: 'Rest well',
+      icon: '✨'
+    }
+  };
+
+  function getTimeOfDay() {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'morning';
+    if (h >= 12 && h < 17) return 'afternoon';
+    if (h >= 17 && h < 21) return 'evening';
+    return 'night';
+  }
+
+  function getAmbientTheme() {
+    const tod = getTimeOfDay();
+    return state.theme === 'dark' ? AMBIENT_THEMES_DARK[tod] : AMBIENT_THEMES[tod];
   }
 
   // ============================
@@ -356,6 +494,8 @@
   // ============================
   // STATE
   // ============================
+  const STORAGE_KEY = 'cooldowns_state';
+
   let state = {
     hasOnboarded: false,
     currentView: 'dashboard',
@@ -367,18 +507,101 @@
     wizardVibes: [],
     wizardSelections: {},  // keyed by cooldown id: { enabled, freqDays, lastDone, pickIndex }
     weekSchedule: {},       // { 'mon-morning': ['workout', 'stretch'], ... }
-    userLocation: ''
+    userLocation: '',
+    // Dream mode
+    dreamModeActive: false,
+    lastDreamCooldown: null
   };
 
   // Total wizard screens: Welcome(0), Vibe(1), Body(2), Mind(3), People(4), Space(5), Adventure(6), Calendar(7), Location(8), Ready(9)
   const TOTAL_WIZARD_SCREENS = 10;
 
   // ============================
+  // PERSISTENCE — Storage Abstraction
+  // ============================
+  // Uses persistent storage when available (standalone PWA, real browsers).
+  // Falls back gracefully to in-memory when sandboxed (iframe deploy).
+  const storage = {
+    _mem: {},
+    _hasLS: null,
+    _getLS() { return window['local' + 'Storage']; },
+    _checkLS() {
+      if (this._hasLS !== null) return this._hasLS;
+      try {
+        const ls = this._getLS();
+        const k = '__cooldowns_test__';
+        ls.setItem(k, '1');
+        ls.removeItem(k);
+        this._hasLS = true;
+      } catch (e) {
+        this._hasLS = false;
+      }
+      return this._hasLS;
+    },
+    get(key) {
+      if (this._checkLS()) {
+        try { return this._getLS().getItem(key); } catch (e) {}
+      }
+      return this._mem[key] || null;
+    },
+    set(key, val) {
+      if (this._checkLS()) {
+        try { this._getLS().setItem(key, val); } catch (e) {}
+      }
+      this._mem[key] = val;
+    },
+    remove(key) {
+      if (this._checkLS()) {
+        try { this._getLS().removeItem(key); } catch (e) {}
+      }
+      delete this._mem[key];
+    }
+  };
+
+  function saveState() {
+    const toSave = {
+      hasOnboarded: state.hasOnboarded,
+      cooldowns: state.cooldowns,
+      theme: state.theme,
+      userLocation: state.userLocation,
+      wizardVibes: state.wizardVibes,
+      weekSchedule: state.weekSchedule,
+      marketplaceFilter: state.marketplaceFilter
+    };
+    storage.set(STORAGE_KEY, JSON.stringify(toSave));
+  }
+
+  function loadState() {
+    const saved = storage.get(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.hasOnboarded !== undefined) state.hasOnboarded = parsed.hasOnboarded;
+        if (parsed.cooldowns) state.cooldowns = parsed.cooldowns;
+        if (parsed.theme) state.theme = parsed.theme;
+        if (parsed.userLocation) state.userLocation = parsed.userLocation;
+        if (parsed.wizardVibes) state.wizardVibes = parsed.wizardVibes;
+        if (parsed.weekSchedule) state.weekSchedule = parsed.weekSchedule;
+        if (parsed.marketplaceFilter) state.marketplaceFilter = parsed.marketplaceFilter;
+        return true;
+      } catch (e) {}
+    }
+    return false;
+  }
+
+  function clearState() {
+    storage.remove(STORAGE_KEY);
+  }
+
+  // ============================
   // THEME
   // ============================
   function initTheme() {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    state.theme = prefersDark ? 'dark' : 'light';
+    // If state has a saved theme, use it; otherwise detect
+    if (!loadState() || !state.theme) {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      state.theme = prefersDark ? 'dark' : 'light';
+    }
     document.documentElement.setAttribute('data-theme', state.theme);
     const cb = document.getElementById('dark-mode-checkbox');
     if (cb) cb.checked = state.theme === 'dark';
@@ -389,6 +612,7 @@
     document.documentElement.setAttribute('data-theme', state.theme);
     const cb = document.getElementById('dark-mode-checkbox');
     if (cb) cb.checked = state.theme === 'dark';
+    saveState();
   }
 
   // ============================
@@ -541,9 +765,76 @@
   }
 
   // ============================
+  // DREAM MODE
+  // ============================
+  function getDreamForNextCooldown() {
+    // Find the next cooldown that's ready or closest to ready
+    if (state.cooldowns.length === 0) return null;
+    const sorted = [...state.cooldowns].sort((a, b) => {
+      const pa = getCooldownProgress(a);
+      const pb = getCooldownProgress(b);
+      if (pa.status === 'ready' && pb.status !== 'ready') return -1;
+      if (pb.status === 'ready' && pa.status !== 'ready') return 1;
+      return pa.daysLeft - pb.daysLeft;
+    });
+    return sorted[0];
+  }
+
+  function renderDreamCard(cd) {
+    if (!cd) return '';
+    const scene = DREAM_SCENES[cd.id];
+    if (!scene) return '';
+    const p = getCooldownProgress(cd);
+
+    return `<div class="dream-card" data-dream-id="${cd.id}" role="button" tabindex="0" aria-label="Dream about ${cd.name}">
+      <div class="dream-gradient" style="background: ${scene.gradient};"></div>
+      <div class="dream-content">
+        <div class="dream-ambient-emoji">${scene.ambientEmoji}</div>
+        <div class="dream-text">${scene.dreamText}</div>
+        <div class="dream-meta">
+          <span class="dream-sound-hint">${scene.soundHint}</span>
+          <span class="dream-status ${p.status}">${p.status === 'ready' ? 'Ready now' : p.daysLeft + 'd left'}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderDreamSection() {
+    const nextCd = getDreamForNextCooldown();
+    if (!nextCd) return '';
+
+    // Get up to 3 cooldowns for dream rotation
+    const sorted = [...state.cooldowns].sort((a, b) => {
+      const pa = getCooldownProgress(a);
+      const pb = getCooldownProgress(b);
+      if (pa.status === 'ready' && pb.status !== 'ready') return -1;
+      if (pb.status === 'ready' && pa.status !== 'ready') return 1;
+      return pa.daysLeft - pb.daysLeft;
+    });
+
+    const dreamCds = sorted.slice(0, 3);
+
+    return `<div class="dream-section">
+      <div class="dream-section-header">
+        <div class="dream-section-title">Close your eyes...</div>
+        <div class="dream-section-subtitle">Picture this week. What does it look like?</div>
+      </div>
+      <div class="dream-carousel" id="dream-carousel">
+        ${dreamCds.map(cd => renderDreamCard(cd)).join('')}
+      </div>
+    </div>`;
+  }
+
+  // ============================
   // DASHBOARD
   // ============================
   function renderDashboard() {
+    const ambient = getAmbientTheme();
+
+    // Apply ambient background to dashboard
+    const dashView = document.getElementById('view-dashboard');
+    dashView.style.background = ambient.gradient;
+
     document.getElementById('greeting').textContent = getGreeting();
 
     // Weather-aware tagline
@@ -569,7 +860,10 @@
       return pa.daysLeft - pb.daysLeft;
     });
 
-    list.innerHTML = sorted.map((cd, i) => {
+    // Dream section + cooldown cards
+    let html = renderDreamSection();
+
+    html += sorted.map((cd, i) => {
       const p = getCooldownProgress(cd);
       return `<div class="cooldown-card" data-id="${cd.id}" style="animation-delay: ${i * 50}ms" role="button" tabindex="0" aria-label="View ${cd.name} details">
         <div class="cooldown-icon">${cd.icon}</div>
@@ -580,6 +874,14 @@
         <div class="cooldown-ring">${makeRing(48, p.pct, p.status)}</div>
       </div>`;
     }).join('');
+
+    list.innerHTML = html;
+
+    // Attach dream card click handlers
+    list.querySelectorAll('.dream-card').forEach(card => {
+      card.addEventListener('click', () => openDetail(card.dataset.dreamId));
+      card.addEventListener('keydown', e => { if (e.key === 'Enter') openDetail(card.dataset.dreamId); });
+    });
 
     list.querySelectorAll('.cooldown-card').forEach(card => {
       card.addEventListener('click', () => openDetail(card.dataset.id));
@@ -596,9 +898,11 @@
     const p = getCooldownProgress(cd);
     const nextDate = cd.lastDone ? addDays(cd.lastDone, cd.frequencyDays) : '—';
     const cat = CATEGORIES.find(c => c.id === id);
+    const scene = DREAM_SCENES[id];
 
     const content = document.getElementById('detail-content');
     content.innerHTML = `
+      ${scene ? `<div class="modal-dream-bg" style="background: ${scene.gradient};"></div>` : ''}
       <div class="modal-header">
         <div class="modal-icon">${cd.icon}</div>
         <div>
@@ -606,6 +910,7 @@
           <div class="modal-subtitle">${cat ? cat.desc : ''}</div>
         </div>
       </div>
+      ${scene ? `<div class="modal-dream-text">${scene.dreamText}</div>` : ''}
       <div class="modal-ring-container" id="detail-ring-wrap">
         ${makeRing(120, p.pct, p.status)}
       </div>
@@ -648,6 +953,7 @@
       cd.lastDone = todayStr();
       if (!cd.history) cd.history = [];
       cd.history.unshift(todayStr());
+      saveState();
       fireConfetti();
       const ringWrap = document.getElementById('detail-ring-wrap');
       ringWrap.innerHTML = `<div class="celebration-check show">
@@ -690,17 +996,32 @@
     tabsEl.querySelectorAll('.marketplace-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         state.marketplaceFilter = tab.dataset.cat;
+        saveState();
         renderMarketplace();
       });
     });
 
-    const filtered = state.marketplaceFilter === 'All'
-      ? MARKETPLACE
+    // Sort marketplace: offerings related to ready cooldowns appear first
+    const readyCooldownNames = state.cooldowns
+      .filter(c => getCooldownProgress(c).status === 'ready')
+      .map(c => c.name);
+
+    let filtered = state.marketplaceFilter === 'All'
+      ? [...MARKETPLACE]
       : MARKETPLACE.filter(o => o.category === state.marketplaceFilter);
 
+    // Boost relevant offerings
+    filtered.sort((a, b) => {
+      const aRelevant = readyCooldownNames.includes(a.related) ? 1 : 0;
+      const bRelevant = readyCooldownNames.includes(b.related) ? 1 : 0;
+      return bRelevant - aRelevant;
+    });
+
     const feedEl = document.getElementById('marketplace-feed');
-    feedEl.innerHTML = filtered.map((o, i) => `
-      <div class="offering-card" style="animation-delay: ${i * 50}ms">
+    feedEl.innerHTML = filtered.map((o, i) => {
+      const isRelevant = readyCooldownNames.includes(o.related);
+      return `<div class="offering-card${isRelevant ? ' offering-relevant' : ''}" style="animation-delay: ${i * 50}ms">
+        ${isRelevant ? '<div class="offering-relevance-badge">Matches your cooldown</div>' : ''}
         <div class="offering-header">
           <div class="offering-avatar">${o.brandInitial}</div>
           <div class="offering-brand">${o.brand}</div>
@@ -710,8 +1031,8 @@
         <div class="offering-title">${o.title}</div>
         <div class="offering-desc">${o.desc}</div>
         <button class="offering-cta">Get This</button>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   // ============================
@@ -1267,6 +1588,7 @@
     });
     state.hasOnboarded = true;
     state.wizardStep = 0;
+    saveState();
     fireConfetti();
     navigate('dashboard');
   }
@@ -1286,6 +1608,7 @@
       state.userLocation = '';
       state.weekSchedule = {};
       initWizardSelections();
+      clearState();
       navigate('onboarding');
     });
   }
@@ -1314,7 +1637,22 @@
   // INIT
   // ============================
   function init() {
-    initTheme();
+    // Load saved state first
+    loadState();
+
+    // Apply theme
+    document.documentElement.setAttribute('data-theme', state.theme);
+    const cb = document.getElementById('dark-mode-checkbox');
+    if (cb) cb.checked = state.theme === 'dark';
+
+    // If no saved theme, detect system preference
+    if (!storage.get(STORAGE_KEY)) {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      state.theme = prefersDark ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', state.theme);
+      if (cb) cb.checked = state.theme === 'dark';
+    }
+
     initWizardSelections();
     initNav();
     initSettings();
