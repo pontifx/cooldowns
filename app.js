@@ -510,7 +510,12 @@
     userLocation: '',
     // Dream mode
     dreamModeActive: false,
-    lastDreamCooldown: null
+    lastDreamCooldown: null,
+    // Messages & Notifications
+    currentThread: null,   // brand name of currently open thread, or null for inbox
+    readThreads: [],       // brand names of threads that have been opened
+    notifications: [],     // array of notification objects
+    notificationsRead: false // whether the notification drawer has been opened
   };
 
   // Total wizard screens: Welcome(0), Vibe(1), Body(2), Mind(3), People(4), Space(5), Adventure(6), Calendar(7), Location(8), Ready(9)
@@ -566,7 +571,10 @@
       userLocation: state.userLocation,
       wizardVibes: state.wizardVibes,
       weekSchedule: state.weekSchedule,
-      marketplaceFilter: state.marketplaceFilter
+      marketplaceFilter: state.marketplaceFilter,
+      readThreads: state.readThreads,
+      notifications: state.notifications,
+      notificationsRead: state.notificationsRead
     };
     storage.set(STORAGE_KEY, JSON.stringify(toSave));
   }
@@ -583,6 +591,9 @@
         if (parsed.wizardVibes) state.wizardVibes = parsed.wizardVibes;
         if (parsed.weekSchedule) state.weekSchedule = parsed.weekSchedule;
         if (parsed.marketplaceFilter) state.marketplaceFilter = parsed.marketplaceFilter;
+        if (parsed.readThreads) state.readThreads = parsed.readThreads;
+        if (parsed.notifications) state.notifications = parsed.notifications;
+        if (parsed.notificationsRead !== undefined) state.notificationsRead = parsed.notificationsRead;
         return true;
       } catch (e) {}
     }
@@ -633,7 +644,7 @@
     if (view === 'dashboard') window.location.hash = '#/';
     else window.location.hash = '#/' + view;
     if (view === 'dashboard') renderDashboard();
-    if (view === 'marketplace') renderMarketplace();
+    if (view === 'marketplace') renderMessages();
     if (view === 'onboarding') renderWizard();
   }
 
@@ -850,6 +861,21 @@
     }
     document.getElementById('tagline').textContent = tagline;
 
+    // Render notification bell
+    renderNotificationBell();
+
+    // Auto-reset notificationsRead if there are newly-ready cooldowns
+    // (so the bell dot reappears after each mark-complete cycle)
+    const readyCooldowns = state.cooldowns.filter(c => getCooldownProgress(c).status === 'ready');
+    if (readyCooldowns.length > 0 && state.notificationsRead) {
+      // Only reset if there are unread threads too (means new things since last check)
+      const threads = getConversationThreads();
+      const hasUnreadThreads = threads.some(t => isThreadUnread(t));
+      if (hasUnreadThreads) {
+        state.notificationsRead = false;
+      }
+    }
+
     const list = document.getElementById('cooldown-list');
     const sorted = [...state.cooldowns].sort((a, b) => {
       const pa = getCooldownProgress(a);
@@ -984,60 +1010,445 @@
   }
 
   // ============================
-  // MARKETPLACE
+  // MESSAGES & INBOX
   // ============================
-  function renderMarketplace() {
+
+  // --- Time helpers for messages ---
+  function relativeTime(minutesAgo) {
+    if (minutesAgo < 1) return 'just now';
+    if (minutesAgo < 60) return minutesAgo + 'm ago';
+    const h = Math.floor(minutesAgo / 60);
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    if (d < 7) return d + 'd ago';
+    if (d < 30) return Math.floor(d / 7) + 'w ago';
+    return Math.floor(d / 30) + 'mo ago';
+  }
+
+  // Generate a deterministic fake "minutes ago" offset from brand name
+  // Messages tied to ready cooldowns get recent timestamps; others older
+  function getMockMessageAge(brand, relatedCooldown) {
+    const readyCooldowns = state.cooldowns.filter(c => getCooldownProgress(c).status === 'ready').map(c => c.name);
+    const isReady = readyCooldowns.includes(relatedCooldown);
+    // Use brand string to seed a deterministic but varied age
+    const seed = brand.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    if (isReady) {
+      // Recent: 5–120 minutes
+      return 5 + (seed % 115);
+    } else {
+      // Older: 2–72 hours
+      return 120 + (seed % (72 * 60 - 120));
+    }
+  }
+
+  // Group MARKETPLACE entries by brand, keeping all offerings per brand
+  function getConversationThreads() {
+    const brandMap = {};
+    MARKETPLACE.forEach(o => {
+      if (!brandMap[o.brand]) {
+        brandMap[o.brand] = { brand: o.brand, brandInitial: o.brandInitial, offerings: [] };
+      }
+      brandMap[o.brand].offerings.push(o);
+    });
+    return Object.values(brandMap);
+  }
+
+  // Does a brand have any offering related to a ready cooldown?
+  function brandHasReadyOffering(thread) {
+    const readyCooldownNames = state.cooldowns
+      .filter(c => getCooldownProgress(c).status === 'ready')
+      .map(c => c.name);
+    return thread.offerings.some(o => readyCooldownNames.includes(o.related));
+  }
+
+  // Is this brand's thread "unread" (has ready offering AND not yet opened)?
+  function isThreadUnread(thread) {
+    return brandHasReadyOffering(thread) && !state.readThreads.includes(thread.brand);
+  }
+
+  // Main entry point — called from navigate() for marketplace view
+  function renderMessages() {
+    // Reset to inbox view when navigating to Messages tab
+    state.currentThread = null;
+    showInboxMode();
+    renderInbox();
+    updateUnreadBadges();
+  }
+
+  function showInboxMode() {
+    const messagesHeader = document.getElementById('messages-header');
+    const threadHeader = document.getElementById('thread-header');
+    const tabsEl = document.getElementById('marketplace-tabs');
+    const inboxList = document.getElementById('inbox-list');
+    const threadView = document.getElementById('thread-view');
+
+    messagesHeader.style.display = '';
+    threadHeader.style.display = 'none';
+    tabsEl.style.display = '';
+    inboxList.style.display = '';
+    threadView.style.display = 'none';
+  }
+
+  function showThreadMode(brand, related) {
+    const messagesHeader = document.getElementById('messages-header');
+    const threadHeader = document.getElementById('thread-header');
+    const tabsEl = document.getElementById('marketplace-tabs');
+    const inboxList = document.getElementById('inbox-list');
+    const threadView = document.getElementById('thread-view');
+
+    messagesHeader.style.display = 'none';
+    threadHeader.style.display = '';
+    tabsEl.style.display = 'none';
+    inboxList.style.display = 'none';
+    threadView.style.display = '';
+
+    document.getElementById('thread-header-brand').textContent = brand;
+    document.getElementById('thread-header-related').textContent = related ? '↗ ' + related : '';
+
+    document.getElementById('thread-back-btn').onclick = () => {
+      state.currentThread = null;
+      showInboxMode();
+      renderInbox();
+      document.getElementById('view-container').scrollTop = 0;
+    };
+  }
+
+  function renderInbox() {
     const allCategories = ['All', 'Health', 'Fitness', 'Travel', 'Home', 'Learning', 'Finance'];
     const tabsEl = document.getElementById('marketplace-tabs');
     tabsEl.innerHTML = allCategories.map(cat => `
       <button class="marketplace-tab ${state.marketplaceFilter === cat ? 'active' : ''}" data-cat="${cat}">${cat}</button>
     `).join('');
-
     tabsEl.querySelectorAll('.marketplace-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         state.marketplaceFilter = tab.dataset.cat;
         saveState();
-        renderMarketplace();
+        renderInbox();
       });
     });
 
-    // Sort marketplace: offerings related to ready cooldowns appear first
+    // Build thread list from MARKETPLACE data
+    let threads = getConversationThreads();
+
+    // Filter by category
+    if (state.marketplaceFilter !== 'All') {
+      threads = threads.filter(t => t.offerings.some(o => o.category === state.marketplaceFilter));
+    }
+
+    // Sort: unread/ready-related first, then by mock timestamp
+    threads.sort((a, b) => {
+      const aUnread = isThreadUnread(a) ? 1 : 0;
+      const bUnread = isThreadUnread(b) ? 1 : 0;
+      if (aUnread !== bUnread) return bUnread - aUnread;
+      // Within same unread state, sort by most recent message
+      const aAge = Math.min(...a.offerings.map(o => getMockMessageAge(a.brand, o.related)));
+      const bAge = Math.min(...b.offerings.map(o => getMockMessageAge(b.brand, o.related)));
+      return aAge - bAge;
+    });
+
+    const inboxEl = document.getElementById('inbox-list');
+
+    if (threads.length === 0) {
+      inboxEl.innerHTML = `<div class="inbox-empty">
+        <div class="inbox-empty-icon">💬</div>
+        <div class="inbox-empty-title">No messages yet</div>
+        <div class="inbox-empty-desc">When your cooldowns are ready, brands will have offers waiting for you.</div>
+      </div>`;
+      return;
+    }
+
+    inboxEl.innerHTML = threads.map((thread, i) => {
+      const unread = isThreadUnread(thread);
+      // Get the most recent (lowest age) offering for preview
+      const latestOffering = thread.offerings.reduce((prev, curr) => {
+        return getMockMessageAge(thread.brand, curr.related) < getMockMessageAge(thread.brand, prev.related) ? curr : prev;
+      });
+      const ageMin = getMockMessageAge(thread.brand, latestOffering.related);
+      const timeStr = relativeTime(ageMin);
+      const relatedLabel = thread.offerings.map(o => o.related).filter((v, idx, arr) => arr.indexOf(v) === idx).join(', ');
+
+      return `<div class="inbox-item${unread ? ' has-unread' : ''}" data-brand="${escapeAttr(thread.brand)}" style="animation-delay: ${i * 40}ms; position: relative;" role="button" tabindex="0" aria-label="Open conversation with ${thread.brand}">
+        <div class="inbox-item-avatar">${thread.brandInitial}</div>
+        <div class="inbox-item-body">
+          <div class="inbox-item-top">
+            <span class="inbox-item-brand">${thread.brand}</span>
+            <span class="inbox-item-time">${timeStr}</span>
+          </div>
+          <div class="inbox-item-preview">${latestOffering.title}</div>
+          <div class="inbox-item-meta">
+            <span class="inbox-item-related">${relatedLabel}</span>
+            <span class="inbox-item-unread-dot"></span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Attach click handlers
+    inboxEl.querySelectorAll('.inbox-item').forEach(item => {
+      const brand = item.dataset.brand;
+      item.addEventListener('click', () => openThread(brand));
+      item.addEventListener('keydown', e => { if (e.key === 'Enter') openThread(brand); });
+    });
+  }
+
+  function openThread(brandName) {
+    const threads = getConversationThreads();
+    const thread = threads.find(t => t.brand === brandName);
+    if (!thread) return;
+
+    // Mark thread as read
+    if (!state.readThreads.includes(brandName)) {
+      state.readThreads.push(brandName);
+      saveState();
+    }
+
+    state.currentThread = brandName;
+
+    const relatedLabel = thread.offerings.map(o => o.related).filter((v, idx, arr) => arr.indexOf(v) === idx).join(', ');
+    showThreadMode(brandName, relatedLabel);
+    renderThread(thread);
+    updateUnreadBadges();
+    document.getElementById('view-container').scrollTop = 0;
+  }
+
+  function renderThread(thread) {
+    const threadEl = document.getElementById('thread-view');
     const readyCooldownNames = state.cooldowns
       .filter(c => getCooldownProgress(c).status === 'ready')
       .map(c => c.name);
 
-    let filtered = state.marketplaceFilter === 'All'
-      ? [...MARKETPLACE]
-      : MARKETPLACE.filter(o => o.category === state.marketplaceFilter);
+    let html = '';
 
-    // Boost relevant offerings
-    filtered.sort((a, b) => {
-      const aRelevant = readyCooldownNames.includes(a.related) ? 1 : 0;
-      const bRelevant = readyCooldownNames.includes(b.related) ? 1 : 0;
-      return bRelevant - aRelevant;
+    // Date divider
+    html += `<div class="thread-date-divider">Today</div>`;
+
+    thread.offerings.forEach((offering, i) => {
+      const ageMin = getMockMessageAge(thread.brand, offering.related);
+      const timeStr = relativeTime(ageMin);
+      const isReady = readyCooldownNames.includes(offering.related);
+
+      // Brand message bubble (left)
+      html += `<div class="thread-message brand-side" style="animation-delay: ${i * 80}ms">
+        <div class="thread-message-sender">
+          <div class="thread-sender-avatar">${thread.brandInitial}</div>
+          <span class="thread-sender-name">${thread.brand}</span>
+        </div>
+        <div class="thread-message-bubble">
+          <div class="thread-offering-image" style="background: ${offering.gradient};"></div>
+          <div class="thread-offering-title">${offering.title}</div>
+          <div class="thread-offering-desc">${offering.desc}</div>
+          ${isReady ? `<div class="thread-cooldown-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${offering.related} is ready
+          </div>` : ''}
+        </div>
+        <span class="thread-message-time">${timeStr}</span>
+      </div>`;
     });
 
-    const feedEl = document.getElementById('marketplace-feed');
-    feedEl.innerHTML = filtered.map((o, i) => {
-      const isRelevant = readyCooldownNames.includes(o.related);
-      return `<div class="offering-card${isRelevant ? ' offering-relevant' : ''}" style="animation-delay: ${i * 50}ms">
-        ${isRelevant ? '<div class="offering-relevance-badge">Matches your cooldown</div>' : ''}
-        <div class="offering-header">
-          <div class="offering-avatar">${o.brandInitial}</div>
-          <div class="offering-brand">${o.brand}</div>
-          <div class="offering-tag">${o.related}</div>
-        </div>
-        <div class="offering-image" style="background: ${o.gradient};"></div>
-        <div class="offering-title">${o.title}</div>
-        <div class="offering-desc">${o.desc}</div>
-        <button class="offering-cta">Get This</button>
-      </div>`;
-    }).join('');
+    // User CTA (right side) — one reply button per thread
+    const hasReady = thread.offerings.some(o => readyCooldownNames.includes(o.related));
+    const ctaLabel = hasReady ? 'Get This Deal' : 'Explore Offers';
+
+    html += `<div class="thread-message user-side" style="animation-delay: ${thread.offerings.length * 80}ms">
+      <button class="thread-cta" aria-label="${ctaLabel}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        ${ctaLabel}
+      </button>
+    </div>`;
+
+    threadEl.innerHTML = html;
+  }
+
+  function escapeAttr(str) {
+    return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   // ============================
-  // WIZARD — NEW ONBOARDING
+  // NOTIFICATION SYSTEM
   // ============================
+
+  function buildNotifications() {
+    const notifications = [];
+    const readyCooldowns = state.cooldowns.filter(c => getCooldownProgress(c).status === 'ready');
+
+    // "Your X is ready" notifications for ready cooldowns
+    readyCooldowns.forEach(cd => {
+      const p = getCooldownProgress(cd);
+      const minutesAgo = p.daysOver > 0
+        ? Math.min(p.daysOver * 24 * 60, 7 * 24 * 60)
+        : 45;
+      notifications.push({
+        id: 'ready-' + cd.id,
+        type: 'ready',
+        icon: cd.icon,
+        text: `Your <strong>${cd.name}</strong> cooldown is ready`,
+        timeAgo: minutesAgo,
+        action: { type: 'detail', id: cd.id },
+        unread: true
+      });
+    });
+
+    // "New offering from X" for brands whose offerings relate to ready cooldowns
+    const readyCooldownNames = readyCooldowns.map(c => c.name);
+    const seenBrands = new Set();
+    MARKETPLACE.forEach(o => {
+      if (readyCooldownNames.includes(o.related) && !seenBrands.has(o.brand)) {
+        seenBrands.add(o.brand);
+        const ageMin = getMockMessageAge(o.brand, o.related);
+        notifications.push({
+          id: 'offer-' + o.brand.replace(/\s+/g, '-').toLowerCase(),
+          type: 'offering',
+          icon: o.brandInitial,
+          text: `New offering from <strong>${o.brand}</strong>`,
+          timeAgo: ageMin,
+          action: { type: 'thread', brand: o.brand },
+          unread: !state.readThreads.includes(o.brand)
+        });
+      }
+    });
+
+    // Sort: unread first, then most recent
+    notifications.sort((a, b) => {
+      if (a.unread && !b.unread) return -1;
+      if (!a.unread && b.unread) return 1;
+      return a.timeAgo - b.timeAgo;
+    });
+
+    return notifications;
+  }
+
+  function renderNotificationBell() {
+    const bell = document.getElementById('notification-bell');
+    const dot = document.getElementById('notification-dot');
+    if (!bell || !dot) return;
+
+    const notifications = buildNotifications();
+    const hasUnread = notifications.some(n => n.unread);
+
+    bell.classList.toggle('has-notifications', hasUnread);
+    dot.classList.toggle('visible', hasUnread && !state.notificationsRead);
+
+    // Remove old listener and add fresh one
+    const newBell = bell.cloneNode(true);
+    bell.parentNode.replaceChild(newBell, bell);
+    const freshDot = document.getElementById('notification-dot');
+    freshDot.classList.toggle('visible', hasUnread && !state.notificationsRead);
+    newBell.classList.toggle('has-notifications', hasUnread);
+
+    newBell.addEventListener('click', toggleNotificationDrawer);
+  }
+
+  function updateUnreadBadges() {
+    const threads = getConversationThreads();
+    const hasUnreadThreads = threads.some(t => isThreadUnread(t));
+    const navDot = document.getElementById('nav-unread-dot');
+    if (navDot) navDot.classList.toggle('visible', hasUnreadThreads);
+
+    // Also update notification bell dot
+    const bell = document.getElementById('notification-bell');
+    const dot = document.getElementById('notification-dot');
+    if (bell && dot) {
+      const notifications = buildNotifications();
+      const hasUnread = notifications.some(n => n.unread);
+      bell.classList.toggle('has-notifications', hasUnread);
+      dot.classList.toggle('visible', hasUnread && !state.notificationsRead);
+    }
+  }
+
+  function toggleNotificationDrawer() {
+    const drawer = document.getElementById('notification-drawer');
+    if (!drawer) return;
+
+    const isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+      closeNotificationDrawer();
+    } else {
+      openNotificationDrawer();
+    }
+  }
+
+  function openNotificationDrawer() {
+    const drawer = document.getElementById('notification-drawer');
+    if (!drawer) return;
+
+    // Mark all as read
+    state.notificationsRead = true;
+    saveState();
+
+    // Hide bell dot
+    const dot = document.getElementById('notification-dot');
+    if (dot) dot.classList.remove('visible');
+
+    // Build & render notifications
+    const notifications = buildNotifications();
+    const listEl = document.getElementById('notification-list');
+    if (notifications.length === 0) {
+      listEl.innerHTML = '<div class="notification-empty">You\'re all caught up ✨</div>';
+    } else {
+      listEl.innerHTML = notifications.map((n, i) => {
+        const iconIsEmoji = isNaN(parseInt(n.icon)) || n.icon.length > 1 || n.type === 'ready';
+        const iconContent = iconIsEmoji ? n.icon : n.icon;
+        return `<div class="notification-item${n.unread ? ' unread' : ''}" data-action='${JSON.stringify(n.action)}' style="animation-delay: ${i * 50}ms" role="button" tabindex="0">
+          <div class="notification-item-icon ${n.type}">${iconContent}</div>
+          <div class="notification-item-body">
+            <div class="notification-item-text">${n.text}</div>
+            <div class="notification-item-time">${relativeTime(n.timeAgo)}</div>
+          </div>
+          ${n.unread ? '<div class="notification-item-unread-dot"></div>' : ''}
+        </div>`;
+      }).join('');
+
+      listEl.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+          try {
+            const action = JSON.parse(item.dataset.action);
+            closeNotificationDrawer();
+            if (action.type === 'detail') {
+              openDetail(action.id);
+            } else if (action.type === 'thread') {
+              navigate('marketplace');
+              setTimeout(() => openThread(action.brand), 100);
+            }
+          } catch (e) {}
+        });
+        item.addEventListener('keydown', e => {
+          if (e.key === 'Enter') item.click();
+        });
+      });
+    }
+
+    // Show drawer
+    drawer.removeAttribute('hidden');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        drawer.classList.add('open');
+      });
+    });
+
+    // Close on backdrop click
+    const backdrop = document.getElementById('notification-drawer-backdrop');
+    backdrop.onclick = closeNotificationDrawer;
+
+    // Close button
+    document.getElementById('notification-drawer-close').onclick = closeNotificationDrawer;
+  }
+
+  function closeNotificationDrawer() {
+    const drawer = document.getElementById('notification-drawer');
+    if (!drawer) return;
+    drawer.classList.remove('open');
+    setTimeout(() => {
+      drawer.setAttribute('hidden', '');
+    }, 360);
+  }
+
+  // Keep old renderMarketplace as alias for any legacy code
+  function renderMarketplace() {
+    renderMessages();
+  }
+
+
 
   function initWizardSelections() {
     // Set defaults for all cooldown selections
@@ -1607,10 +2018,62 @@
       state.cooldowns = [];
       state.userLocation = '';
       state.weekSchedule = {};
+      state.readThreads = [];
+      state.notifications = [];
+      state.notificationsRead = false;
       initWizardSelections();
       clearState();
       navigate('onboarding');
     });
+
+    // Push notification permission
+    const pushBtn = document.getElementById('enable-push-btn');
+    if (pushBtn) {
+      // Update button state based on current permission
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          pushBtn.textContent = 'Enabled';
+          pushBtn.disabled = true;
+          pushBtn.style.opacity = '0.6';
+        } else if (Notification.permission === 'denied') {
+          pushBtn.textContent = 'Blocked';
+          pushBtn.disabled = true;
+          pushBtn.style.opacity = '0.6';
+        }
+      } else {
+        pushBtn.textContent = 'Not supported';
+        pushBtn.disabled = true;
+        pushBtn.style.opacity = '0.5';
+      }
+
+      pushBtn.addEventListener('click', () => {
+        if (!('Notification' in window)) return;
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            pushBtn.textContent = 'Enabled';
+            pushBtn.disabled = true;
+            pushBtn.style.opacity = '0.6';
+            // Send a test notification
+            const readyCooldowns = state.cooldowns.filter(c => getCooldownProgress(c).status === 'ready');
+            if (readyCooldowns.length > 0) {
+              new Notification('Cooldowns', {
+                body: 'Your ' + readyCooldowns[0].name + ' is ready!',
+                icon: './icon.svg'
+              });
+            } else {
+              new Notification('Cooldowns', {
+                body: 'Notifications enabled. We\'ll let you know when it\'s time.',
+                icon: './icon.svg'
+              });
+            }
+          } else {
+            pushBtn.textContent = permission === 'denied' ? 'Blocked' : 'Dismissed';
+            pushBtn.disabled = true;
+            pushBtn.style.opacity = '0.6';
+          }
+        });
+      });
+    }
   }
 
   // ============================
@@ -1677,6 +2140,9 @@
 
     handleHash();
     window.addEventListener('hashchange', handleHash);
+
+    // Update unread state across the whole UI
+    updateUnreadBadges();
 
     // If onboarding, render wizard
     if (!state.hasOnboarded) {
